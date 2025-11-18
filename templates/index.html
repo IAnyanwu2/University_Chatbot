@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSU CS Graduate Program Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .clear-btn {
+            position: relative;
+            margin: 0 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            word-break: break-word;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            text-align: right;
+        }
+
+        .bot-message {
+            text-align: left;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 90%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            white-space: pre-wrap;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .user-message .message-content {
+            background: #007bff;
+            color: white;
+        }
+
+        .bot-message .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .message-info {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .confidence-bar {
+            height: 3px;
+            background: #e9ecef;
+            border-radius: 2px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #0abde3);
+            transition: width 0.3s ease;
+        }
+
+        .bot-bullets {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6px 0;
+        }
+
+        .info-table td {
+            padding: 6px 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .table-key { font-weight: 600; width: 30%; background: #f8f9fa; }
+        .table-val { width: 70%; }
+
+        .message-content a { color: #007bff; }
+
+        .sources {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+            resize: vertical; /* allow vertical resizing, not horizontal */
+            min-height: 44px;
+            max-height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap; /* wrap long lines */
+        }
+
+        .chat-input:focus {
+            border-color: #007bff;
+        }
+
+        .send-button {
+            padding: 12px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        .send-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .system-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            z-index: 1000;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online { background: #28a745; }
+        .status-offline { background: #dc3545; }
+
+        .example-questions {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .example-questions h3 {
+            color: #6c757d;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .example-btn {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-btn:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>GSU CS Graduate Program Assistant</h1>
+            <p>Ask me anything about the Computer Science Graduate Program at Georgia State University</p>
+            <!-- Buttons moved back below chat -->
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div class="message-content">
+                    Welcome! I'm your GSU Computer Science Graduate Program assistant. I can help you with:
+                    <br>• Admission requirements and deadlines<br>
+                    • Course curriculum and requirements<br>
+                    • Financial aid and assistantships<br>
+                    • Student services and resources<br>
+                    <br>What would you like to know?
+                </div>
+            </div>
+            
+            <div class="example-questions">
+                <h3>Try asking:</h3>
+                <div class="example-btn" onclick="askQuestion('What are the admission requirements?')">What are the admission requirements?</div>
+                <div class="example-btn" onclick="askQuestion('Tell me about research areas')">Tell me about research areas</div>
+                <div class="example-btn" onclick="askQuestion('How can I get financial aid?')">How can I get financial aid?</div>
+                <div class="example-btn" onclick="askQuestion('What courses are required?')">What courses are required?</div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <form class="chat-input-form" id="chatForm">
+                <textarea class="chat-input" id="messageInput" placeholder="Ask your question here..." autocomplete="off" rows="1"></textarea>
+                <button type="submit" class="send-button" id="sendButton">Send</button>
+            </form>
+            <div style="display:flex; justify-content:flex-end; align-items:center; gap:16px; margin:24px 32px 0 0;">
+                <button id="view-history" class="clear-btn" style="background:#e9d7f8; color:#2f1b70; border:1px solid #f5c6cb;">View History</button>
+                <button type="button" id="clear-history" class="clear-btn" style="background:#e9d7f8; color:#721c24; border:1px solid #f5c6cb;">Clear History</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="system-status" id="systemStatus">
+        <span class="status-indicator status-offline" id="statusIndicator"></span>
+        <span id="statusText">Checking system...</span>
+    </div>
+
+    <!-- Chat History Modal -->
+    <div id="historyModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:white; border-radius:16px; max-width:600px; width:90vw; max-height:80vh; overflow-y:auto; margin:auto; padding:32px; position:relative;">
+            <h2 style="margin-bottom:16px;">Chat History</h2>
+            <div id="historyContent" style="font-size:1rem; color:#333;"></div>
+            <button id="closeHistory" style="position:absolute; top:16px; right:16px; background:#007bff; color:white; border:none; border-radius:8px; padding:6px 14px; cursor:pointer;">Close</button>
+        </div>
+    </div>
+
+    <script>
+                // Chat History Modal logic
+                const viewHistoryBtn = document.getElementById('view-history');
+                const historyModal = document.getElementById('historyModal');
+                const closeHistoryBtn = document.getElementById('closeHistory');
+                const historyContent = document.getElementById('historyContent');
+
+                viewHistoryBtn.addEventListener('click', async () => {
+                    historyModal.style.display = 'flex';
+                    historyContent.innerHTML = '<div class="loading"></div> Loading...';
+                    try {
+                        const response = await fetch('/api/history');
+                        const data = await response.json();
+                        if (data.history && data.history.length > 0) {
+                            historyContent.innerHTML = data.history.map(msg => `<div style="margin-bottom:12px;"><b>${msg.role === 'user' ? 'Student' : 'Assistant'}:</b> ${msg.content}</div>`).join('');
+                        } else {
+                            historyContent.innerHTML = '<i>No chat history found.</i>';
+                        }
+                    } catch (err) {
+                        historyContent.innerHTML = '<span style="color:red;">Error loading history.</span>';
+                    }
+                });
+
+                closeHistoryBtn.addEventListener('click', () => {
+                    historyModal.style.display = 'none';
+                });
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const chatForm = document.getElementById('chatForm');
+        const systemStatus = document.getElementById('systemStatus');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+
+        let isLoading = false;
+
+        // Check system status
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = 'System Online';
+                } else {
+                    statusIndicator.className = 'status-indicator status-offline';
+                    statusText.textContent = 'System Offline';
+                }
+            } catch (error) {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'Connection Error';
+            }
+        }
+
+        // Helper: convert plaintext into formatted HTML for bot messages
+        function formatBotContent(text, sources=[]) {
+            if (!text) return '';
+
+            // Normalize common source tokens so we catch both square and fullwidth brackets
+            text = text.replace(/【source】/g, '[source]').replace(/《source》/g, '[source]');
+
+            // Replace [source] and variants sequentially with links if the sources array contains URLs
+            let sourceIndex = 0;
+            text = text.replace(/\[source\]|【source】|\u3010source\u3011/ig, function () {
+                const s = sources[sourceIndex++] || null;
+                if (s && /https?:\/\//.test(s)) {
+                    return `<a href="${s}" target="_blank" rel="noopener noreferrer">[source]</a>`;
+                } else if (s) {
+                    return `<span class="source-text">${s}</span>`;
+                }
+                return '[source]';
+            });
+
+            // Convert URLs to clickable links
+            text = text.replace(/(https?:\/\/[^\s]+)/g, function(url){
+                return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+            });
+
+            // If the content contains bullet markers, convert to lists
+            if (/^\s*•/m.test(text)) {
+                const listHtml = text.split(/\n+/).map(line => line.trim()).filter(Boolean).map(line => {
+                    if (line.startsWith('•')) return `<li>${line.replace(/^•\s*/, '')}</li>`;
+                    return `<li>${line}</li>`;
+                }).join('');
+                return `<ul class="bot-bullets">${listHtml}</ul>`;
+            }
+
+            // If the content looks like a pipe-separated table (markdown tables), convert to HTML table
+            // Detect lines that contain at least one pipe and a header separator like ---
+            const mdLines = text.split('\n');
+            const hasPipeLines = mdLines.filter(l => l.includes('|')).length;
+            if (hasPipeLines >= 2) {
+                // Build table from pipe-delimited rows (ignore markdown separator lines)
+                const rows = mdLines.filter(l => l.trim().length > 0 && l.includes('|') && !/^\s*[|\s-:]+$/.test(l));
+                if (rows.length) {
+                    const cells = rows.map(r => r.split('|').map(c => c.trim()).filter(Boolean));
+                    // Convert to HTML table
+                    let tableHtml = '<table class="info-table">';
+                    cells.forEach((r, idx) => {
+                        tableHtml += '<tr>' + r.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
+                    });
+                    tableHtml += '</table>';
+                    return tableHtml;
+                }
+            }
+
+            // Markdown-style pipe tables (| col1 | col2 |) - quick parsing
+            if (/\|/.test(text) && /\n/.test(text)) {
+                const lines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
+                if (lines.length >= 2 && lines[0].includes('|')) {
+                    // Try to parse header row if present
+                    const rows = lines.map(line => {
+                        const cells = line.split('|').map(c => c.trim()).filter(Boolean);
+                        return cells;
+                    });
+                    // Build table HTML
+                    const header = rows[0];
+                    const bodyRows = rows.slice(1);
+                    let tableHtml = '<table class="info-table"><thead><tr>' + header.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+                    bodyRows.forEach(r => {
+                        tableHtml += '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>';
+                    });
+                    tableHtml += '</tbody></table>';
+                    return tableHtml;
+                }
+            }
+
+            // If we have candidates for key:value lines, convert them to a table
+            const lines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
+            const colonCount = lines.filter(l => l.includes(':')).length;
+            if (lines.length >= 2 && colonCount >= 2) {
+                // Build table
+                const rows = lines.map(line => {
+                    const parts = line.split(':');
+                    const key = parts.shift();
+                    const val = parts.join(':');
+                    return `<tr><td class="table-key">${key.trim()}</td><td class="table-val">${val.trim()}</td></tr>`;
+                }).join('\n');
+                return `<table class="info-table">${rows}</table>`;
+            }
+
+            // Preserve newlines
+            text = text.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>');
+            return `<p>${text}</p>`;
+        }
+
+        // Add message to chat
+        function addMessage(content, isUser = false, confidence = null, sources = []) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+
+            // Escape HTML to prevent injection for user messages
+            function escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            let messageContent = content;
+            if (isUser) {
+                messageContent = escapeHtml(content).replace(/\n/g, '<br>');
+            } else {
+                // Format bot content for better readability (lists, tables, clickable source tokens)
+                messageContent = formatBotContent(content, sources);
+            }
+            let messageHTML = `<div class="message-content">${messageContent}</div>`;
+
+            if (!isUser) {
+                let infoHTML = '';
+
+                if (confidence !== null) {
+                    const confidencePercent = Math.round(confidence * 100);
+                    infoHTML += `
+                        <div class="message-info">
+                            Confidence: ${confidencePercent}%
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (sources && sources.length > 0) {
+                    const sourcesHtml = sources.map(s => {
+                        if (/https?:\/\//.test(s)) return `<a href="${s}" target="_blank" rel="noopener noreferrer">${s}</a>`;
+                        return `<span>${s}</span>`;
+                    }).join(', ');
+                    infoHTML += `<div class="sources">Sources: ${sourcesHtml}</div>`;
+                }
+
+                messageHTML += infoHTML;
+            }
+
+            messageDiv.innerHTML = messageHTML;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Send message
+        async function sendMessage(question) {
+            if (isLoading) return;
+            
+            const message = question || messageInput.value.trim();
+            if (!message) return;
+            
+            // Clear input if it was typed
+            if (!question) messageInput.value = '';
+            // Reset auto-grow height
+            messageInput.style.height = '44px';
+            
+            // Add user message
+            addMessage(message, true);
+            
+            // Show loading
+            isLoading = true;
+            sendButton.innerHTML = '<div class="loading"></div>';
+            sendButton.disabled = true;
+            
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message bot-message';
+            loadingDiv.innerHTML = '<div class="message-content">Thinking... <div class="loading"></div></div>';
+            chatMessages.appendChild(loadingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: message })
+                });
+                
+                const data = await response.json();
+                
+                // Remove loading message
+                chatMessages.removeChild(loadingDiv);
+                
+                // Add bot response
+                addMessage(data.answer, false, data.confidence, data.sources);
+                
+            } catch (error) {
+                // Remove loading message
+                chatMessages.removeChild(loadingDiv);
+                
+                // Add error message
+                addMessage('Sorry, I encountered an error. Please try again later or contact the CS department directly.', false);
+                console.error('Chat error:', error);
+            } finally {
+                // Reset loading state
+                isLoading = false;
+                sendButton.innerHTML = 'Send';
+                sendButton.disabled = false;
+            }
+        }
+
+        // Ask predefined question
+        function askQuestion(question) {
+            sendMessage(question);
+        }
+
+        // Form submission
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendMessage();
+        });
+
+        // Enter key handling (allow Shift+Enter for newline)
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Auto-grow text area for input
+        messageInput.addEventListener('input', () => {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = Math.min(messageInput.scrollHeight, 200) + 'px';
+        });
+
+        // Clear history function
+        function clearHistory() {
+            if (confirm('Clear chat history? This will remove conversation context.')) {
+                fetch('/api/history', {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.error) {
+                        // Clear visual messages (keep welcome)
+                        const chatMessages = document.getElementById('chatMessages');
+                        const firstMessage = chatMessages.querySelector('.bot-message');
+                        chatMessages.innerHTML = '';
+                        chatMessages.appendChild(firstMessage);
+                        addMessage('Chat history cleared. Starting fresh!', false);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+
+        // Add clear button event listener
+        document.getElementById('clear-history').addEventListener('click', clearHistory);
+
+        // Initial system check
+        checkSystemStatus();
+        
+        // Check system status periodically
+        setInterval(checkSystemStatus, 30000);
+    </script>
+</body>
+</html>

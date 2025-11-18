@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.sqlite3
+
+# venv
+venv/
+.env
+
+# Chroma/DB and caches
+chroma_db/
+chroma.sqlite3
+data/
+
+# Mac and Windows
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Other
+*.log
