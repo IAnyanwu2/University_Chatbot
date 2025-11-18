@@ -216,3 +216,31 @@ For questions about this implementation:
 - Check the troubleshooting section above
 - Review Ollama documentation: https://ollama.ai/docs
 - Check ChromaDB documentation: https://docs.trychroma.com/
+
+## Additional notes: enhanced RAG vs lightweight dev server
+
+This repository contains both a lightweight development server (used by `app.py` to avoid heavy model imports at startup) and a more production-ready enhanced RAG pipeline. Use the option below to test each:
+
+- Lightweight dev server (fast, used by default):
+    - Run: `python app.py`
+    - This uses `LightweightVectorStore` and is recommended for UI changes and quick debugging.
+
+- Enhanced RAG pipeline (ChromaDB + SentenceTransformers):
+    - CLI test: `python enhanced_rag_chatbot.py` will initialize the `EnhancedRAGChatbot` class and run test queries.
+    - To use Enhanced RAG in the web UI, create a small Flask wrapper or edit `app.py` to use `EnhancedRAGChatbot` instead of `LightweightVectorStore`.
+
+## How to push to GitHub (quick)
+
+1. Create a repo on GitHub via the website or GitHub CLI, then run:
+```powershell
+git init
+git add .
+git commit -m "Initial: GSU CS RAG Chatbot"
+git branch -M main
+git remote add origin https://github.com/<username>/<repo>.git
+git push -u origin main
+```
+
+2. Avoid pushing local secrets. `.gitignore` contains recommended exclusions (venv, chroma_db, data caches).
+
+If you'd like, I can prepare a branch with a small `app_enhanced.py` Flask wrapper to run the web UI on the Enhanced RAG pipeline and push it to your repo — tell me the repo name if you'd like me to push.
