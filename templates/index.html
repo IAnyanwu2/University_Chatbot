@@ -498,10 +498,6 @@
                 <textarea class="chat-input" id="messageInput" placeholder="Ask your question here..."></textarea>
                 <button type="submit" class="send-button" id="sendButton">Send</button>
             </form>
-            <div style="display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-top: 15px;">
-                <button id="view-history" class="clear-btn">View History</button>
-                <button type="button" id="clear-history" class="clear-btn">Clear History</button>
-            </div>
         </div>
     </div>
 
@@ -510,41 +506,7 @@
         <span id="statusText">Checking system...</span>
     </div>
 
-    <!-- Chat History Modal -->
-    <div id="historyModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
-        <div style="background:white; border-radius:16px; max-width:600px; width:90vw; max-height:80vh; overflow-y:auto; margin:auto; padding:32px; position:relative;">
-            <h2 style="margin-bottom:16px;">Chat History</h2>
-            <div id="historyContent" style="font-size:1rem; color:#333;"></div>
-            <button id="closeHistory" style="position:absolute; top:16px; right:16px; background:#007bff; color:white; border:none; border-radius:8px; padding:6px 14px; cursor:pointer;">Close</button>
-        </div>
-    </div>
-
     <script>
-                // Chat History Modal logic
-                const viewHistoryBtn = document.getElementById('view-history');
-                const historyModal = document.getElementById('historyModal');
-                const closeHistoryBtn = document.getElementById('closeHistory');
-                const historyContent = document.getElementById('historyContent');
-
-                viewHistoryBtn.addEventListener('click', async () => {
-                    historyModal.style.display = 'flex';
-                    historyContent.innerHTML = '<div class="loading"></div> Loading...';
-                    try {
-                        const response = await fetch('/api/history');
-                        const data = await response.json();
-                        if (data.history && data.history.length > 0) {
-                            historyContent.innerHTML = data.history.map(msg => `<div style="margin-bottom:12px;"><b>${msg.role === 'user' ? 'Student' : 'Assistant'}:</b> ${msg.content}</div>`).join('');
-                        } else {
-                            historyContent.innerHTML = '<i>No chat history found.</i>';
-                        }
-                    } catch (err) {
-                        historyContent.innerHTML = '<span style="color:red;">Error loading history.</span>';
-                    }
-                });
-
-                closeHistoryBtn.addEventListener('click', () => {
-                    historyModal.style.display = 'none';
-                });
         const chatMessages = document.getElementById('chatMessages');
         const chatMessagesInner = document.getElementById('chatMessagesInner');
         const messageInput = document.getElementById('messageInput');
@@ -872,30 +834,6 @@
             messageInput.style.height = 'auto';
             messageInput.style.height = Math.min(messageInput.scrollHeight, 200) + 'px';
         });
-
-        // Clear history function
-        function clearHistory() {
-            if (confirm('Clear chat history? This will remove conversation context.')) {
-                fetch('/api/history', {
-                    method: 'DELETE'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.error) {
-                        // Clear visual messages (keep welcome)
-                        const chatMessagesInner = document.getElementById('chatMessagesInner');
-                        const firstMessage = chatMessagesInner.querySelector('.bot-message');
-                        chatMessagesInner.innerHTML = '';
-                        if (firstMessage) chatMessagesInner.appendChild(firstMessage);
-                        addMessage('Chat history cleared. Starting fresh!', false);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            }
-        }
-
-        // Add clear button event listener
-        document.getElementById('clear-history').addEventListener('click', clearHistory);
 
         // Initial system check
         checkSystemStatus();
