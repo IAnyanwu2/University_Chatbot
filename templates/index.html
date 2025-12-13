@@ -547,10 +547,10 @@
                 const s = sources[sourceIndex++] || null;
                 if (s && /https?:\/\//.test(s)) {
                     return `<a href="${s}" target="_blank" rel="noopener noreferrer">[source]</a>`;
-                } else if (s) {
-                    return `<span class="source-text">${s}</span>`;
+                } else {
+                    // For non-URL sources (like "Graduate FAQs"), remove the [source] marker entirely
+                    return '';
                 }
-                return '[source]';
             });
 
             // Convert URLs to clickable links and ensure spacing before link if absent
@@ -723,11 +723,14 @@
                 }
 
                 if (sources && sources.length > 0) {
-                    const sourcesHtml = sources.map(s => {
-                        if (/https?:\/\//.test(s)) return `<a href="${s}" target="_blank" rel="noopener noreferrer">${s}</a>`;
-                        return `<span>${s}</span>`;
-                    }).join(', ');
-                    messageHTML += `<div class="sources">Sources: ${sourcesHtml}</div>`;
+                    // Only show URL sources in the sources section
+                    const urlSources = sources.filter(s => /https?:\/\//.test(s));
+                    if (urlSources.length > 0) {
+                        const sourcesHtml = urlSources.map(s => 
+                            `<a href="${s}" target="_blank" rel="noopener noreferrer">${s}</a>`
+                        ).join(', ');
+                        messageHTML += `<div class="sources">Sources: ${sourcesHtml}</div>`;
+                    }
                 }
 
                 messageHTML += `</div>`;
