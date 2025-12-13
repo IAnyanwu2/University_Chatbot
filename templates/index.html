@@ -618,8 +618,10 @@
                 return `<ul class="bot-bullets">${listHtml}</ul>`;
             }
 
+            // TABLE FORMATTING DISABLED - Causes issues with email links
             // If the content looks like a pipe-separated table (markdown tables), convert to HTML table
             // Detect lines that contain at least one pipe and a header separator like ---
+            /*
             const mdLines = text.split('\n');
             const hasPipeLines = mdLines.filter(l => l.includes('|')).length;
             if (hasPipeLines >= 2) {
@@ -668,9 +670,10 @@
                     const key = parts.shift();
                     const val = parts.join(':');
                     return `<tr><td class="table-key">${key.trim()}</td><td class="table-val">${val.trim()}</td></tr>`;
-                }).join('\n');
+                }).join('');
                 return `<table class="info-table">${rows}</table>`;
             }
+            */
 
             // Preserve newlines
             text = text.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>');
