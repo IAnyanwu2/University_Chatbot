@@ -770,19 +770,7 @@
                     <div class="bot-message-wrapper">
                         <div class="message-content">${messageContent}</div>`;
 
-                // Add info sections below the message content
-                if (confidence !== null) {
-                    const confidencePercent = Math.round(confidence * 100);
-                    messageHTML += `
-                        <div class="message-info">
-                            <span>Confidence: ${confidencePercent}%</span>
-                            <div class="confidence-bar">
-                                <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
-                            </div>
-                        </div>
-                    `;
-                }
-
+                // Add sources section if available
                 if (sources && sources.length > 0) {
                     // Only show URL sources in the sources section
                     const urlSources = sources.filter(s => /https?:\/\//.test(s));
