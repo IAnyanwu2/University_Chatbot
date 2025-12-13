@@ -370,12 +370,19 @@
             word-break: break-word; 
         }
 
-        .faculty-email { 
-            color: #0066cc; 
-            text-decoration: underline;
+        .message-content a.faculty-email { 
+            color: #0066cc !important; 
+            text-decoration: underline !important;
+            font-weight: normal !important;
+            cursor: pointer !important;
+            word-break: break-word; 
         }
-        .faculty-email:hover {
-            text-decoration: none;
+        .message-content a.faculty-email:hover {
+            color: #0052a3 !important;
+            text-decoration: underline !important;
+        }
+        .message-content a.faculty-email:visited {
+            color: #551A8B !important;
         }
         .verified-badge {
             display: inline-block;
