@@ -2,7 +2,14 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 import logging
 import json
+import os
+import subprocess
+import sys
 from datetime import datetime
+import os
+import subprocess
+import os
+import re
 
 # Import lightweight components to avoid transformers import hang
 from lightweight_vector_store import LightweightVectorStore
@@ -77,16 +84,106 @@ def chat():
         
         # Generate response
         response = llm.generate_response(query, context_chunks, similarity_scores)
-        
+
+        # Load known faculty emails to use for sanitization
+        faculty_emails = {}
+        verified_map = {}
+        try:
+            with open('data/faculty_emails.json', 'r', encoding='utf-8') as f:
+                faculty_emails = json.load(f)
+        except Exception:
+            faculty_emails = {}
+        try:
+            with open('data/faculty_emails_verified.json', 'r', encoding='utf-8') as vf:
+                verified_map = json.load(vf)
+        except Exception:
+            # fallback: mark any present entries as unverified unless explicitly true
+            verified_map = {k: False for k in faculty_emails.keys()}
+
+        # Prepare approved email sets
+        approved_emails = set()
+        for name, email in faculty_emails.items():
+            if verified_map.get(name, False):
+                approved_emails.add(email.lower())
+
+        # Helper sanitizers
+        email_regex = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+        phone_regex = re.compile(r"\+?\d[\d\s\-()]{7,}\d")
+
+        def sanitize_text(text: str):
+            """Redact any email or phone occurrences that are not in approved_emails."""
+            if not text:
+                return text, False
+            redacted = False
+
+            # redact emails not in approved list
+            def _email_repl(m):
+                nonlocal redacted
+                email = m.group(0)
+                if email.lower() in approved_emails:
+                    return email
+                redacted = True
+                return "[contact redacted]"
+
+            text = email_regex.sub(_email_repl, text)
+
+            # redact phone-like strings
+            def _phone_repl(m):
+                nonlocal redacted
+                val = m.group(0)
+                # very small heuristic: if contains letters it's not a phone
+                if any(c.isalpha() for c in val):
+                    return val
+                redacted = True
+                return "[contact redacted]"
+
+            text = phone_regex.sub(_phone_repl, text)
+
+            return text, redacted
+
+        # Default contacts empty
+        contacts = []
+
+        # If the LLM returned structured JSON, prefer that and filter contacts
+        structured = getattr(response, 'structured', None)
+        redaction_note = ""
+        if structured and isinstance(structured, dict):
+            answer_text = structured.get('answer', response.content)
+            # sanitize free-text answer
+            sanitized_answer, redacted = sanitize_text(answer_text)
+            if redacted:
+                redaction_note = "\n\n[Note: One or more contact items were redacted because they could not be verified.]"
+
+            # process contacts array if present
+            raw_contacts = structured.get('contacts', []) if isinstance(structured.get('contacts', []), list) else []
+            for c in raw_contacts:
+                name = c.get('name') if isinstance(c, dict) else None
+                email = (c.get('email') if isinstance(c, dict) else None) or ''
+                if email and email.lower() in approved_emails:
+                    # keep only approved verified contacts
+                    contacts.append({'name': name, 'email': email, 'verified': True})
+                else:
+                    # skip unverified contacts
+                    continue
+
+            final_answer = sanitized_answer + redaction_note
+        else:
+            # No structured response: sanitize raw text
+            final_answer, redacted = sanitize_text(response.content)
+            if redacted:
+                redaction_note = "\n\n[Note: One or more contact items were redacted because they could not be verified.]"
+                final_answer = final_answer + redaction_note
+
         # Prepare response data
         response_data = {
-            'answer': response.content,
+            'answer': final_answer,
             'confidence': response.confidence,
             'sources': [r.metadata.get('source', 'unknown') for r in results[:3]],
+            'contacts': contacts,
             'query': query,
             'timestamp': datetime.now().isoformat()
         }
-        
+
         logger.info(f"Response generated with confidence: {response.confidence:.2f}")
         return jsonify(response_data)
         
@@ -153,14 +250,14 @@ def get_history():
 def clear_history():
     """Clear chat history for a session"""
     global llm
-    
+
     if not llm:
         return jsonify({'error': 'Chatbot not initialized'}), 500
-    
+
     try:
         data = request.get_json()
         session_id = data.get('session_id', 'default') if data else 'default'
-        
+
         llm.clear_history(session_id)
         return jsonify({
             'message': f'Chat history cleared for session: {session_id}',
@@ -194,6 +291,36 @@ def system_info():
         logger.error(f"Error getting system info: {e}")
         return jsonify({'error': 'Failed to get system info'}), 500
 
+
+@app.route('/api/faculty_emails', methods=['GET'])
+def faculty_emails():
+    """Serve a simple mapping of known faculty names to email addresses to avoid hallucinated contact info."""
+    try:
+        # Return mapping and verified flags if available
+        with open('data/faculty_emails.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        verified = {}
+        try:
+            with open('data/faculty_emails_verified.json', 'r', encoding='utf-8') as vf:
+                verified = json.load(vf)
+        except Exception:
+            # If verified file missing or invalid, assume entries are unverified
+            verified = {k: False for k in data.keys()}
+
+        # Build response as array of entries for easier consumption by frontend
+        entries = []
+        for name, email in data.items():
+            entries.append({
+                'name': name,
+                'email': email,
+                'verified': bool(verified.get(name, False))
+            })
+        return jsonify({'entries': entries})
+    except Exception as e:
+        logger.error(f"Failed to load faculty emails: {e}")
+        return jsonify({'entries': []}), 500
+
 @app.route('/health')
 def health_check():
     """Health check endpoint"""
@@ -204,6 +331,10 @@ def health_check():
         'status': status,
         'timestamp': datetime.now().isoformat()
     })
+
+
+# Note: admin scrape endpoint intentionally not exposed. Use the
+# `scripts/scrape_directory.py` script manually or schedule it.
 
 if __name__ == '__main__':
     # Initialize chatbot before starting server

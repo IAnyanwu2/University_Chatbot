@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GSU CS Graduate Program Chatbot</title>
+    <title>GSU CS Graduate Program Assistant</title>
     <style>
         * {
             margin: 0;
@@ -13,71 +13,60 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            height: 100vh;
+            background: white;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
 
         .chat-container {
-            width: 90%;
+            width: 100%;
             max-width: 800px;
             height: 90vh;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            margin: 0 auto;
         }
 
         .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
-            padding: 20px;
+            padding: 25px 30px;
             text-align: center;
-            position: relative;
         }
 
         .chat-header h1 {
             font-size: 1.5rem;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
 
         .chat-header p {
             opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-        .clear-btn {
-            position: relative;
-            margin: 0 8px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.3s ease;
-        }
-
-        .clear-btn:hover {
-            background: rgba(255,255,255,0.3);
-            border-color: rgba(255,255,255,0.5);
+            font-size: 0.95rem;
+            font-weight: 300;
         }
 
         .chat-messages {
             flex: 1;
-            padding: 20px;
+            padding: 30px;
             overflow-y: auto;
-            background: #f8f9fa;
-            word-break: break-word;
+            background: #fafbfc;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .message {
-            margin-bottom: 15px;
+            display: flex;
+            width: 100%;
+            margin-bottom: 16px;
             animation: fadeIn 0.3s ease-in;
         }
 
@@ -86,133 +75,187 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .user-message {
-            text-align: right;
+        .user-message { 
+            justify-content: flex-end; 
+        }
+        
+        .bot-message { 
+            justify-content: flex-start; 
         }
 
-        .bot-message {
-            text-align: left;
+        .bot-message-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: fit-content;
+            max-width: 70%;
+            align-items: flex-start;
         }
 
         .message-content {
-            display: inline-block;
-            max-width: 90%;
-            padding: 12px 16px;
+            padding: 16px 20px;
             border-radius: 18px;
-            white-space: pre-wrap;
-            line-height: 1.4;
-            word-break: break-word;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            word-wrap: break-word;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: fit-content;
+            min-width: 80px;
         }
 
         .user-message .message-content {
-            background: #007bff;
+            max-width: 70%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
+            border-bottom-right-radius: 4px;
         }
 
         .bot-message .message-content {
             background: white;
-            color: #333;
-            border: 1px solid #e9ecef;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            color: #2c3e50;
+            border: 1px solid #e8eef5;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         }
 
-        .message-info {
-            font-size: 0.75rem;
+        .example-questions {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .example-questions h3 {
             color: #6c757d;
-            margin-top: 5px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
-        .confidence-bar {
-            height: 3px;
-            background: #e9ecef;
-            border-radius: 2px;
-            margin: 5px 0;
-            overflow: hidden;
+        .example-btn {
+            display: inline-block;
+            margin: 6px 8px;
+            padding: 10px 16px;
+            background: #f8f9fa;
+            border: 1px solid #e8eef5;
+            color: #1e3c72;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
         }
 
-        .confidence-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #0abde3);
-            transition: width 0.3s ease;
-        }
-
-        .bot-bullets {
-            margin: 8px 0;
-            padding-left: 20px;
-        }
-
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 6px 0;
-        }
-
-        .info-table td {
-            padding: 6px 8px;
-            border: 1px solid #e9ecef;
-        }
-
-        .table-key { font-weight: 600; width: 30%; background: #f8f9fa; }
-        .table-val { width: 70%; }
-
-        .message-content a { color: #007bff; }
-
-        .sources {
-            font-size: 0.75rem;
-            color: #6c757d;
-            margin-top: 5px;
+        .example-btn:hover {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border-color: #1e3c72;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30,60,114,0.2);
         }
 
         .chat-input-container {
-            padding: 20px;
+            padding: 30px 40px;
             background: white;
-            border-top: 1px solid #e9ecef;
+            border-top: 1px solid #e8eef5;
         }
 
         .chat-input-form {
             display: flex;
-            gap: 10px;
-            align-items: center;
+            gap: 15px;
+            align-items: flex-end;
+            justify-content: center;
+            max-width: 70%;
+            margin: 0 auto;
+            width: 100%;
         }
 
         .chat-input {
             flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e9ecef;
+            padding: 15px 20px;
+            border: 2px solid #d1e7fd;
             border-radius: 25px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             outline: none;
             transition: border-color 0.3s ease;
-            resize: vertical; /* allow vertical resizing, not horizontal */
-            min-height: 44px;
+            resize: none;
+            min-height: 60px;
             max-height: 150px;
-            overflow-y: auto;
-            white-space: pre-wrap; /* wrap long lines */
+            font-family: inherit;
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
 
         .chat-input:focus {
-            border-color: #007bff;
+            border-color: #1e3c72;
         }
 
         .send-button {
-            padding: 12px 20px;
-            background: #007bff;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             border: none;
             border-radius: 25px;
             cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.3s ease;
+            font-size: 0.95rem;
+            font-weight: 600;
+            min-width: 80px;
+            height: 60px;
+            box-shadow: 0 2px 8px rgba(30, 60, 114, 0.2);
+            margin-left: 10px;
+            transition: all 0.2s ease;
         }
 
         .send-button:hover:not(:disabled) {
-            background: #0056b3;
+            background: linear-gradient(135deg, #0f2951 0%, #1a4077 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30,60,114,0.3);
         }
 
         .send-button:disabled {
             background: #6c757d;
             cursor: not-allowed;
         }
+
+        .clear-btn {
+            margin: 8px 4px;
+            background: rgba(30,60,114,0.1);
+            color: #1e3c72;
+            border: 1px solid rgba(30,60,114,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: rgba(30,60,114,0.2);
+            border-color: rgba(30,60,114,0.3);
+        }
+
+        .system-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online { background: #28a745; }
+        .status-offline { background: #dc3545; }
 
         .loading {
             display: inline-block;
@@ -229,56 +272,121 @@
             100% { transform: rotate(360deg); }
         }
 
-        .system-status {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px;
-            background: rgba(0,0,0,0.8);
-            color: white;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            z-index: 1000;
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-
-        .status-online { background: #28a745; }
-        .status-offline { background: #dc3545; }
-
-        .example-questions {
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        .example-questions h3 {
-            color: #6c757d;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-
-        .example-btn {
-            display: inline-block;
-            margin: 5px;
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 15px;
-            font-size: 0.8rem;
+        .clear-btn {
+            margin: 8px 4px;
+            background: rgba(30,60,114,0.1);
+            color: #1e3c72;
+            border: 1px solid rgba(30,60,114,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
             cursor: pointer;
+            font-size: 0.85rem;
             transition: all 0.3s ease;
         }
 
-        .example-btn:hover {
-            background: #007bff;
+        .clear-btn:hover {
+            background: rgba(30,60,114,0.2);
+            border-color: rgba(30,60,114,0.3);
+        }
+
+        .message-info {
+            font-size: 0.72rem;
+            color: #6c757d;
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: rgba(108, 117, 125, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #e9ecef;
+        }
+
+        .confidence-bar {
+            height: 4px;
+            background: #eef2f6;
+            border-radius: 2px;
+            margin: 6px 0 0 0;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #0abde3);
+            transition: width 0.3s ease;
+        }
+
+        .sources {
+            font-size: 0.72rem;
+            color: #6c757d;
+            margin-top: 6px;
+            padding: 6px 12px;
+            background: rgba(13, 110, 253, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #0d6efd;
+        }
+
+        .sources a {
+            color: #0d6efd;
+            text-decoration: none;
+            margin-right: 8px;
+            word-break: break-all;
+        }
+
+        .sources a:hover {
+            text-decoration: underline;
+        }
+
+        .bot-bullets {
+            margin: 8px 0 8px 0;
+            padding-left: 20px;
+        }
+        .bot-bullets li { margin-bottom: 8px; }
+
+        .info-table {
+            width: auto;
+            max-width: 100%;
+            border-collapse: collapse;
+            margin: 8px 0;
+            background: #fff;
+            table-layout: auto;
+            word-wrap: break-word;
+        }
+
+        .info-table td {
+            padding: 4px 6px;
+            border: 1px solid #e9ecef;
+            vertical-align: top;
+        }
+
+        .table-key { 
+            font-weight: 600; 
+            width: 35%; 
+            max-width: 35%; 
+            background: #f8f9fa; 
+        }
+        .table-val { width: 65%; }
+
+        .message-content a { 
+            color: #0066cc; 
+            text-decoration: underline; 
+            word-break: break-word; 
+        }
+
+        .faculty-email { 
+            color: #0066cc; 
+            text-decoration: underline;
+        }
+        .faculty-email:hover {
+            text-decoration: none;
+        }
+        .verified-badge {
+            display: inline-block;
+            margin-left: 6px;
+            background: #28a745;
             color: white;
-            border-color: #007bff;
+            font-size: 0.7rem;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 10px;
+            vertical-align: middle;
         }
     </style>
 </head>
@@ -287,38 +395,44 @@
         <div class="chat-header">
             <h1>GSU CS Graduate Program Assistant</h1>
             <p>Ask me anything about the Computer Science Graduate Program at Georgia State University</p>
-            <!-- Buttons moved back below chat -->
         </div>
         
         <div class="chat-messages" id="chatMessages">
-            <div class="message bot-message">
-                <div class="message-content">
-                    Welcome! I'm your GSU Computer Science Graduate Program assistant. I can help you with:
-                    <br>• Admission requirements and deadlines<br>
-                    • Course curriculum and requirements<br>
-                    • Financial aid and assistantships<br>
-                    • Student services and resources<br>
-                    <br>What would you like to know?
+            <div id="chatMessagesInner">
+                <div class="message bot-message">
+                    <div class="bot-message-wrapper">
+                        <div class="message-content">
+                            Hello! 👋 I'm your friendly AI assistant here to help. I can help you find information about programs, admissions, campus life, and more!
+                        </div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="example-questions">
-                <h3>Try asking:</h3>
-                <div class="example-btn" onclick="askQuestion('What are the admission requirements?')">What are the admission requirements?</div>
-                <div class="example-btn" onclick="askQuestion('Tell me about research areas')">Tell me about research areas</div>
-                <div class="example-btn" onclick="askQuestion('How can I get financial aid?')">How can I get financial aid?</div>
-                <div class="example-btn" onclick="askQuestion('What courses are required?')">What courses are required?</div>
+                
+                <div class="message bot-message">
+                    <div class="bot-message-wrapper">
+                        <div class="message-content">
+                            How can I assist you today?
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="example-questions">
+                    <h3>Try asking:</h3>
+                    <div class="example-btn" onclick="askQuestion('Tell me about graduate programs')">Tell me about graduate programs</div>
+                    <div class="example-btn" onclick="askQuestion('What research opportunities are available?')">What research opportunities are available?</div>
+                    <div class="example-btn" onclick="askQuestion('How do I apply for admission?')">How do I apply for admission?</div>
+                    <div class="example-btn" onclick="askQuestion('What financial support is available?')">What financial support is available?</div>
+                </div>
             </div>
         </div>
         
         <div class="chat-input-container">
             <form class="chat-input-form" id="chatForm">
-                <textarea class="chat-input" id="messageInput" placeholder="Ask your question here..." autocomplete="off" rows="1"></textarea>
+                <textarea class="chat-input" id="messageInput" placeholder="Ask your question here..."></textarea>
                 <button type="submit" class="send-button" id="sendButton">Send</button>
             </form>
-            <div style="display:flex; justify-content:flex-end; align-items:center; gap:16px; margin:24px 32px 0 0;">
-                <button id="view-history" class="clear-btn" style="background:#e9d7f8; color:#2f1b70; border:1px solid #f5c6cb;">View History</button>
-                <button type="button" id="clear-history" class="clear-btn" style="background:#e9d7f8; color:#721c24; border:1px solid #f5c6cb;">Clear History</button>
+            <div style="display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-top: 15px;">
+                <button id="view-history" class="clear-btn">View History</button>
+                <button type="button" id="clear-history" class="clear-btn">Clear History</button>
             </div>
         </div>
     </div>
@@ -364,6 +478,7 @@
                     historyModal.style.display = 'none';
                 });
         const chatMessages = document.getElementById('chatMessages');
+        const chatMessagesInner = document.getElementById('chatMessagesInner');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
         const chatForm = document.getElementById('chatForm');
@@ -392,6 +507,26 @@
             }
         }
 
+        // Faculty email map (populated from server) to avoid hallucinated addresses
+        let facultyEmails = {};
+        let facultyEntries = [];
+        // Load faculty emails mapping once at startup
+        (async function loadFacultyEmails(){
+            try {
+                const resp = await fetch('/api/faculty_emails');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    facultyEntries = data.entries || [];
+                    facultyEntries.forEach(e => {
+                        // Treat all emails as verified per user request
+                        facultyEmails[e.name] = { email: e.email, verified: true };
+                    });
+                }
+            } catch (err) {
+                console.warn('Could not load faculty emails mapping', err);
+            }
+        })();
+
         // Helper: convert plaintext into formatted HTML for bot messages
         function formatBotContent(text, sources=[]) {
             if (!text) return '';
@@ -411,10 +546,61 @@
                 return '[source]';
             });
 
-            // Convert URLs to clickable links
-            text = text.replace(/(https?:\/\/[^\s]+)/g, function(url){
-                return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+            // Convert URLs to clickable links and ensure spacing before link if absent
+            text = text.replace(/(https?:\/\/[^\s]+)/g, function(url, idx, full) {
+                // If the URL is immediately following a letter or ) or ] without space, add a space before link
+                const pos = full.indexOf(url);
+                const beforeChar = pos > 0 ? full.charAt(pos - 1) : ' ';
+                const prefix = /[A-Za-z0-9\)\]\>]/.test(beforeChar) ? ' ' : '';
+                return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`;
             });
+
+            // Replace known faculty names with mailto links to avoid hallucinated emails
+            if (facultyEmails && Object.keys(facultyEmails).length) {
+                // Sort by length desc to avoid partial matching (e.g., 'Wei' vs 'Wei (Lisa) Li')
+                const names = Object.keys(facultyEmails).sort((a,b)=>b.length - a.length);
+                // helper to escape regex
+                const esc = s => s.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&');
+                for (const name of names) {
+                    const entry = facultyEmails[name];
+                    if (!entry) continue;
+                    const email = entry.email || '';
+                    // Treat all emails as verified per user request
+                    const verified = true;
+
+                    // Build variants: "First Last", "Last, First", "F. Last", and a compact form like 'zcai'
+                    const tokens = name.split(/\s+/).filter(Boolean);
+                    const variants = new Set();
+                    if (name.includes(',')) {
+                        const parts = name.split(',').map(p => p.trim());
+                        if (parts.length >= 2) {
+                            const last = parts[0];
+                            const first = parts[1].split(' ')[0];
+                            variants.add(`${first} ${last}`);
+                            variants.add(`${last}, ${first}`);
+                            variants.add(`${first.charAt(0)}.? ${last}`);
+                            variants.add((first.charAt(0) + last).toLowerCase());
+                        }
+                    } else {
+                        if (tokens.length >= 2) {
+                            const first = tokens[0];
+                            const last = tokens[tokens.length - 1];
+                            variants.add(`${first} ${last}`);
+                            variants.add(`${last}, ${first}`);
+                            variants.add(`${first.charAt(0)}.? ${last}`);
+                            // compact: join initial and last without punctuation, e.g. zcai
+                            variants.add((first.charAt(0) + last).toLowerCase());
+                        }
+                    }
+                    variants.add(name);
+
+                    // Simple name-to-email replacement
+                    const nameRegex = new RegExp('\\b' + esc(name) + '\\b', 'gi');
+                    text = text.replace(nameRegex, function(match) {
+                        return `<a href="mailto:${email}" class="faculty-email">${match}</a>`;
+                    });
+                }
+            }
 
             // If the content contains bullet markers, convert to lists
             if (/^\s*•/m.test(text)) {
@@ -502,20 +688,23 @@
             let messageContent = content;
             if (isUser) {
                 messageContent = escapeHtml(content).replace(/\n/g, '<br>');
+                // For user messages, keep simple structure
+                messageDiv.innerHTML = `<div class="message-content">${messageContent}</div>`;
             } else {
-                // Format bot content for better readability (lists, tables, clickable source tokens)
+                // Format bot content for better readability
                 messageContent = formatBotContent(content, sources);
-            }
-            let messageHTML = `<div class="message-content">${messageContent}</div>`;
+                
+                // Create wrapper for bot messages to stack content vertically
+                let messageHTML = `
+                    <div class="bot-message-wrapper">
+                        <div class="message-content">${messageContent}</div>`;
 
-            if (!isUser) {
-                let infoHTML = '';
-
+                // Add info sections below the message content
                 if (confidence !== null) {
                     const confidencePercent = Math.round(confidence * 100);
-                    infoHTML += `
+                    messageHTML += `
                         <div class="message-info">
-                            Confidence: ${confidencePercent}%
+                            <span>Confidence: ${confidencePercent}%</span>
                             <div class="confidence-bar">
                                 <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
                             </div>
@@ -528,14 +717,14 @@
                         if (/https?:\/\//.test(s)) return `<a href="${s}" target="_blank" rel="noopener noreferrer">${s}</a>`;
                         return `<span>${s}</span>`;
                     }).join(', ');
-                    infoHTML += `<div class="sources">Sources: ${sourcesHtml}</div>`;
+                    messageHTML += `<div class="sources">Sources: ${sourcesHtml}</div>`;
                 }
 
-                messageHTML += infoHTML;
+                messageHTML += `</div>`;
+                messageDiv.innerHTML = messageHTML;
             }
 
-            messageDiv.innerHTML = messageHTML;
-            chatMessages.appendChild(messageDiv);
+            chatMessagesInner.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
@@ -561,8 +750,8 @@
             
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'message bot-message';
-            loadingDiv.innerHTML = '<div class="message-content">Thinking... <div class="loading"></div></div>';
-            chatMessages.appendChild(loadingDiv);
+            loadingDiv.innerHTML = '<div class="bot-message-wrapper"><div class="message-content">Thinking... <div class="loading"></div></div></div>';
+            chatMessagesInner.appendChild(loadingDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             
             try {
@@ -577,14 +766,14 @@
                 const data = await response.json();
                 
                 // Remove loading message
-                chatMessages.removeChild(loadingDiv);
+                chatMessagesInner.removeChild(loadingDiv);
                 
                 // Add bot response
                 addMessage(data.answer, false, data.confidence, data.sources);
                 
             } catch (error) {
                 // Remove loading message
-                chatMessages.removeChild(loadingDiv);
+                if (chatMessagesInner.contains(loadingDiv)) chatMessagesInner.removeChild(loadingDiv);
                 
                 // Add error message
                 addMessage('Sorry, I encountered an error. Please try again later or contact the CS department directly.', false);
@@ -632,10 +821,10 @@
                 .then(data => {
                     if (!data.error) {
                         // Clear visual messages (keep welcome)
-                        const chatMessages = document.getElementById('chatMessages');
-                        const firstMessage = chatMessages.querySelector('.bot-message');
-                        chatMessages.innerHTML = '';
-                        chatMessages.appendChild(firstMessage);
+                        const chatMessagesInner = document.getElementById('chatMessagesInner');
+                        const firstMessage = chatMessagesInner.querySelector('.bot-message');
+                        chatMessagesInner.innerHTML = '';
+                        if (firstMessage) chatMessagesInner.appendChild(firstMessage);
                         addMessage('Chat history cleared. Starting fresh!', false);
                     }
                 })

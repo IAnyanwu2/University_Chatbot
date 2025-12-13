@@ -17,6 +17,7 @@ class LLMResponse:
     content: str
     confidence: float
     sources_used: List[str]
+    structured: Optional[dict] = None
 
 class CloudLLMInterface:
     """Interface for cloud-based LLMs as Ollama alternative"""
@@ -27,15 +28,25 @@ class CloudLLMInterface:
         self.ollama_model = "gpt-oss:120b-cloud"  # Your current model
         self.use_ollama = True  # Try Ollama first
         
+        # Important: require structured output and forbid inventing contact information
         self.system_prompt = """You are the Georgia State University Computer Science Graduate Program Assistant chatbot. Your role is to provide accurate, helpful information about the CS graduate program based ONLY on the provided context.
 
-IMPORTANT GUIDELINES:
-1. Answer ONLY based on the provided context documents
-2. If the answer isn't in the context, say "I don't have that specific information in my knowledge base. Please contact the CS department directly."
-3. Be conversational but professional
-4. If asked about personal information (applications, grades, etc.), redirect to appropriate contacts
-5. Always cite your sources when possible
-6. If the question is unrelated to the CS graduate program, politely redirect"""
+    REQUIREMENTS (MUST FOLLOW):
+    1) Do NOT invent or fabricate names, email addresses, phone numbers, or contact information under any circumstances.
+       - If a contact is not present in the provided context, respond that you do not have verified contact information.
+    2) Answer ONLY based on the provided context documents. If the context doesn't contain the information, reply that you don't have that information.
+    3) Always cite sources when possible.
+    4) Format your final response as a single JSON object ONLY. The JSON must include at least the key `answer` (string). Optional keys: `contacts` (array of {"name":..., "email":..., "verified":true/false}), `sources` (array of source strings).
+       - Example valid JSON:
+         {
+           "answer": "Short helpful answer here.",
+           "contacts": [{"name":"Jane Doe","email":"jdoe@gsu.edu","verified":true}],
+           "sources": ["Admissions Guide 2024"]
+         }
+    5) If you cannot produce JSON exactly as requested, respond with a single JSON object containing `answer` explaining you could not comply.
+
+    Be concise, factual, and do not add any text outside the JSON object.
+    """
     
     def generate_response(self, query: str, context_chunks: List[str], 
                          similarity_scores: Optional[List[float]] = None) -> LLMResponse:
@@ -100,11 +111,34 @@ Please provide a helpful and accurate answer based strictly on the context above
                 if content:
                     # Clean up response
                     content = self._clean_ollama_response(content)
-                    
+
+                    # Try to parse JSON structured output (we required JSON in system prompt)
+                    structured = None
+                    try:
+                        # Some models prepend code fences; remove common fences
+                        trimmed = content.strip()
+                        if trimmed.startswith('```'):
+                            # try to extract JSON block
+                            parts = trimmed.split('```')
+                            # find the first part that looks like JSON
+                            for p in parts:
+                                p = p.strip()
+                                if p.startswith('{') or p.startswith('['):
+                                    try:
+                                        structured = json.loads(p)
+                                        break
+                                    except Exception:
+                                        continue
+                        elif trimmed.startswith('{') or trimmed.startswith('['):
+                            structured = json.loads(trimmed)
+                    except Exception:
+                        structured = None
+
                     return LLMResponse(
                         content=content,
                         confidence=confidence,
-                        sources_used=["Ollama Local Model"]
+                        sources_used=["Ollama Local Model"],
+                        structured=structured
                     )
             else:
                 logger.error(f"Ollama API error: {response.status_code}")
