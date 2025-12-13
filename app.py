@@ -332,6 +332,13 @@ def health_check():
         'timestamp': datetime.now().isoformat()
     })
 
+@app.route('/georgia_state_panthers_logo.png')
+def serve_logo():
+    """Serve the GSU logo from the root directory"""
+    from flask import send_from_directory
+    import os
+    return send_from_directory(os.getcwd(), 'georgia_state_panthers_logo.png')
+
 
 # Note: admin scrape endpoint intentionally not exposed. Use the
 # `scripts/scrape_directory.py` script manually or schedule it.

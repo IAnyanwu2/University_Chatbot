@@ -41,6 +41,33 @@
             text-align: center;
         }
 
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header-text {
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            /* Convert blue logo to white for better contrast against blue background */
+            filter: brightness(0) invert(1);
+            opacity: 0.95;
+        }
+
+        .header-logo-left, .header-logo-right {
+            flex-shrink: 0;
+        }
+
         .chat-header h1 {
             font-size: 1.5rem;
             margin-bottom: 8px;
@@ -51,6 +78,26 @@
             opacity: 0.9;
             font-size: 0.95rem;
             font-weight: 300;
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 768px) {
+            .header-content {
+                gap: 15px;
+            }
+            
+            .header-logo {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .chat-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .chat-header p {
+                font-size: 0.9rem;
+            }
         }
 
         .chat-messages {
@@ -400,8 +447,14 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>GSU CS Graduate Program Assistant</h1>
-            <p>Ask me anything about the Computer Science Graduate Program at Georgia State University</p>
+            <div class="header-content">
+                <img src="/georgia_state_panthers_logo.png" alt="GSU Logo" class="header-logo header-logo-left">
+                <div class="header-text">
+                    <h1>GSU CS Graduate Program Assistant</h1>
+                    <p>Ask me anything about the Computer Science Graduate Program at Georgia State University</p>
+                </div>
+                <img src="/georgia_state_panthers_logo.png" alt="GSU Logo" class="header-logo header-logo-right">
+            </div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
