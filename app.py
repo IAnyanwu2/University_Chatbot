@@ -339,6 +339,34 @@ def serve_logo():
     import os
     return send_from_directory(os.getcwd(), 'georgia_state_panthers_logo.png')
 
+@app.route('/favicon.ico')
+def favicon():
+    """Serve the favicon"""
+    from flask import send_from_directory
+    import os
+    return send_from_directory(os.getcwd(), 'GSU.png')
+
+@app.route('/favicon-32x32.png')
+def favicon_32():
+    """Serve 32x32 favicon"""
+    from flask import send_from_directory
+    import os
+    return send_from_directory(os.getcwd(), 'GSU.png')
+
+@app.route('/favicon-16x16.png')
+def favicon_16():
+    """Serve 16x16 favicon"""
+    from flask import send_from_directory
+    import os
+    return send_from_directory(os.getcwd(), 'GSU.png')
+
+@app.route('/apple-touch-icon.png')
+def apple_icon():
+    """Serve Apple touch icon"""
+    from flask import send_from_directory
+    import os
+    return send_from_directory(os.getcwd(), 'GSU.png')
+
 
 # Note: admin scrape endpoint intentionally not exposed. Use the
 # `scripts/scrape_directory.py` script manually or schedule it.
