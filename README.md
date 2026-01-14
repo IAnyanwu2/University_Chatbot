@@ -244,3 +244,22 @@ git push -u origin main
 2. Avoid pushing local secrets. `.gitignore` contains recommended exclusions (venv, chroma_db, data caches).
 
 If you'd like, I can prepare a branch with a small `app_enhanced.py` Flask wrapper to run the web UI on the Enhanced RAG pipeline and push it to your repo — tell me the repo name if you'd like me to push.
+
+## **Current Status (for submission)**
+
+- **Default runtime:** The web UI (`app.py`) uses the lightweight TF‑IDF `LightweightVectorStore` by default for fast startup and UI debugging.
+- **Production-ready option available:** A ChromaDB-backed pipeline with SentenceTransformers is implemented (`vector_store.py` and `chroma_vector_store.py`) and listed in `requirements.txt`.
+- **Embedding/runtime behavior:** SentenceTransformer weights are downloaded and loaded when the embedding model is instantiated. Document embeddings can and should be precomputed and persisted (Chroma) during ingestion; only the query embedding is computed per user request.
+- **Hardware note:** CPU-only inference works for small embedding models (e.g., `all-MiniLM-L6-v2`) but is slower than GPU. For larger models or heavy traffic, a GPU is recommended for both faster embedding generation and lower latency on larger models. Model download and embedding-model initialization happen once at load time; query embedding and inference happen during runtime per request.
+
+## **Suggested Improvements (short list)**
+
+- Precompute and persist document embeddings during ingestion (avoid embedding at query time except for the user query). This reduces runtime CPU/GPU cost.
+- Add explicit instructions to switch `app.py` from `LightweightVectorStore` to the Chroma-backed `VectorStore` (one-liner config snippet), so graders can run either mode deterministically.
+- Document GPU requirements and the steps to enable CUDA/PyTorch in the README (how to install `torch` with CUDA), and provide a recommended small-model fallback for CPU-only environments.
+- Create a small evaluation set of representative queries and expected answers (QA pairs) so unanswered/low-confidence questions are tracked and quantified.
+- Improve data quality: canonicalize documents, add structured metadata (source, date, document type), and create a contact-verification mapping to avoid hallucinated contact info.
+- Add instrumentation: logging of retrieval hits, response confidence, latency, and error traces to help triage failures and monitor improvements.
+- Consider adopting a Model Context Protocol (MCP) or retrieval-as-a-service pattern if you need to stream large context to models or support multiple LLM backends; MCP-like services help separate retrieval, ranking, and model serving for scale and auditing.
+
+---
